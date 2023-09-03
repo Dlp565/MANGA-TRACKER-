@@ -19,7 +19,6 @@ def list_users(request: Request):
     
 @router.post("/register", response_description="POST user",status_code=status.HTTP_201_CREATED, response_model=User)
 def create_test(request: Request, user: User = Body(...)):
-    print(user)
     user = jsonable_encoder(user)
     new_user = request.app.database["USERS"].insert_one(user)
     created_user = request.app.database["USERS"].find_one(

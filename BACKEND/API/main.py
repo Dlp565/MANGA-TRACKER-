@@ -20,8 +20,8 @@ app.add_middleware(
 @app.on_event("startup")
 def startup_db_client(request = Request):
     print(config["ATLAS_URI"])
-    #app.mongodb_client = MongoClient(config["ATLAS_URI"])
-    app.mongodb_client = MongoClient("localhost",27017)
+    app.mongodb_client = MongoClient(config["ATLAS_URI"])
+    #app.mongodb_client = MongoClient("localhost",27017)
     app.database = app.mongodb_client[config["DB_NAME"]]
     print("Conneceted to the MongoDB DB!")
     
