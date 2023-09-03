@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
 from dotenv import dotenv_values
 from pymongo import MongoClient
 from routes import router as test_router 
@@ -30,7 +31,7 @@ def startup_db_client(request = Request):
 def shutdown_db_client():
     app.mongodb_client.close()
 
-app.include_router(test_router, tags=["users"], prefix="/user")
+app.include_router(test_router, tags=["users"], prefix="")
 
 '''
 

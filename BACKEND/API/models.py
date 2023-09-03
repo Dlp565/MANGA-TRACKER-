@@ -4,10 +4,10 @@ from pydantic import BaseModel, Field
 
 
 class User(BaseModel):
+      
+    username: str = Field(...)
+    email: str = Field(...)
     
-    
-    name: str = Field(...)
-    password: str = Field(...)
     
 
     class Config:
@@ -19,6 +19,16 @@ class User(BaseModel):
                 "password": "ExPass"
             }
         }
+
+class UserInDB(User):
+    hashed_password: str = Field(...)
+
+class Token(BaseModel):
+    access_token : str
+    token_type : str
+
+class TokenData(BaseModel):
+    username: str | None = None
 
 
 """
