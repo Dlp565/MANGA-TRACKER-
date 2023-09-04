@@ -5,8 +5,8 @@ from pydantic import BaseModel, Field
 
 class User(BaseModel):
       
-    username: str = Field(...)
-    email: str = Field(...)
+    name: str = Field(...)
+    hashed_password: str = Field(...)
     
     
 
@@ -16,7 +16,7 @@ class User(BaseModel):
             "example": {
                 "_id": "066de609-b04a-4b30-b46c-32537c7f1f6e",
                 "name": "ExUser",
-                "password": "ExPass"
+                "hashed_password": "ExPass"
             }
         }
 

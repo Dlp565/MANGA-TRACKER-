@@ -7,32 +7,23 @@ from models import User, UserInDB, Token, TokenData
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from dotenv import dotenv_values
+from pymongo import MongoClient
 config = dotenv_values(".env")
 
-
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "$2b$12$X4/cBkRDQPFtSUtndjIt5.Q2TIOoQXcGKRm7cvofsSCk7XxBx9T0K",
-        "disabled": False,
-    },
-    "alice": {
-        "username": "alice",
-        "full_name": "Alice Wonderson",
-        "email": "alice@example.com",
-        "hashed_password": "fakehashedsecret2",
-        "disabled": True,
-    },
-}
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
+def setup_db():
+    client = MongoClient(config["ATLAS_URI"])
+    db = client[config["DB_NAME"]]
+    users = db["USERS"]
+    return users
+
 def verify_password(plain_password, hashed_password):
+    
 
     # Ensures the hashed password and plain password are the same
     return pwd_context.verify(plain_password,hashed_password)
@@ -43,21 +34,24 @@ def get_password_hash(password):
 
     return pwd_context.hash(password)
 
-def get_user(db, username: str):
+def get_user(username: str):
     
    # Get user from database
         # this one needs to change to get the user from the database 
 
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
+    #TODO: make this get the user from the mongodb using username
+    users = setup_db()
+    u = users.find_one({"name":username})
+    return u
+    
+    
 
-def authenticate_user(fake_db, username: str, password: str):
+def authenticate_user(username: str, password: str):
     # checks that user login (w/ username + password) are in the DB
-    user = get_user(fake_db, username)
+    user = get_user(username)
     if not user:
         return False
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user["hashed_password"]):
         return False
     return user
 
@@ -88,18 +82,19 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
     try:
         #take in the token and decode it using the secret key and algo
-        payload = jwt.decode(token, config["SECRET_KEY"],algorithm=config["ALGORITHM"])
+        payload = jwt.decode(token, config["SECRET_KEY"], algorithms=config["ALGORITHM"])
         #get the username from the decoded token
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
         #store TokenData as it's own thing
         token_data = TokenData(username=username)
-    except:
+    except Exception as e:
         raise credentials_exception
 
     #get user from db based on username from token
-    user = get_user(fake_users_db, username=token_data.username)
+
+    user = get_user(username=token_data.username)
     if user is None:
         raise credentials_exception
     return user 
@@ -112,9 +107,9 @@ async def get_current_active_user(current_user: Annotated[User, Depends(get_curr
 @router.post("/token")
 async def login_for_access_token (form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 
-    
+
     #authenticates the user 
-    user = authenticate_user(fake_users_db,form_data.username, form_data.password)
+    user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -122,14 +117,18 @@ async def login_for_access_token (form_data: Annotated[OAuth2PasswordRequestForm
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    
     # set access token expiration date using env preset amount
     access_token_expires = timedelta(minutes=int(config["ACCESS_TOKEN_EXPIRE_MINUTES"]))
     # create the access token 
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user["name"]}, expires_delta=access_token_expires
     )
+    
+    print(access_token)
     # sends the access token 
-    return {"access_token" : user.username, "token_type": "bearer"}
+    #return {"access_token" : user["name"], "token_type": "bearer"}
+    return {"access_token" : access_token, "token_type": "bearer"}
 
 
 @router.get('/items/')
@@ -138,6 +137,9 @@ async def read_items(token: Annotated[str, Depends(get_current_active_user)]):
 
 @router.get('/users/me')
 async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
+    print(current_user)
+    current_user['_id'] = str(current_user['_id'])
+    del current_user["hashed_password"]
     return current_user
 
 
