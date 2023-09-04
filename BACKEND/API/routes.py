@@ -39,11 +39,15 @@ def get_user(username: str):
    # Get user from database
         # this one needs to change to get the user from the database 
 
-    #TODO: make this get the user from the mongodb using username
+    
     users = setup_db()
     u = users.find_one({"name":username})
     return u
     
+def create_user(username: str, password: str):
+    users = setup_db()
+    u = users.insert_one({"name":username,"hashed_password":get_password_hash(password)})
+    return get_user(username)
     
 
 def authenticate_user(username: str, password: str):
@@ -72,6 +76,7 @@ def create_access_token(data:dict, expires_delta: timedelta | None = None):
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     #function to get current user 
 
+    print(token)
 
     # prewritten exception when credentials are wrong
     credentials_exception = HTTPException(
@@ -131,6 +136,21 @@ async def login_for_access_token (form_data: Annotated[OAuth2PasswordRequestForm
     return {"access_token" : access_token, "token_type": "bearer"}
 
 
+@router.post('/register')
+async def register(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) :
+    user = create_user(form_data.username,form_data.password)
+    # set access token expiration date using env preset amount
+    access_token_expires = timedelta(minutes=int(config["ACCESS_TOKEN_EXPIRE_MINUTES"]))
+    # create the access token 
+    access_token = create_access_token(
+        data={"sub": user["name"]}, expires_delta=access_token_expires
+    )
+    
+    print(access_token)
+    # sends the access token 
+    #return {"access_token" : user["name"], "token_type": "bearer"}
+    return {"access_token" : access_token, "token_type": "bearer"}
+
 @router.get('/items/')
 async def read_items(token: Annotated[str, Depends(get_current_active_user)]):
     return {"token": token}
@@ -141,6 +161,7 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]
     del current_user['_id']
     del current_user["hashed_password"]
 
+    
     return current_user
 
 
