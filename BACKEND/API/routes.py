@@ -138,8 +138,9 @@ async def read_items(token: Annotated[str, Depends(get_current_active_user)]):
 @router.get('/users/me')
 async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
     print(current_user)
-    current_user['_id'] = str(current_user['_id'])
+    del current_user['_id']
     del current_user["hashed_password"]
+
     return current_user
 
 
