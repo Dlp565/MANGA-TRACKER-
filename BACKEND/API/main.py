@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from pymongo import MongoClient
 from userRoutes import router as user_router 
+from collectionRoutes import router as collection_router
 from dotenv import dotenv_values
 config = dotenv_values(".env")
 
@@ -34,4 +35,5 @@ def shutdown_db_client():
     app.mongodb_client.close()
 
 app.include_router(user_router, tags=["users"], prefix="")
+app.include_router(collection_router, tags = ["collection"],prefix = "/collection")
 

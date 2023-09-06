@@ -1,20 +1,18 @@
-from fastapi import APIRouter, Body, Request, Response, HTTPException, status, Depends
-from fastapi.encoders import jsonable_encoder
+from fastapi import APIRouter,HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from typing import List, Annotated
-from userModels import User, UserInDB, Token, TokenData
-from jose import JWTError, jwt
+from userModels import User, TokenData
+from jose import jwt
 from passlib.context import CryptContext
 from dotenv import dotenv_values
-from pymongo import MongoClient
 from db import db
 config = dotenv_values(".env")
 
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 def setup_db():
