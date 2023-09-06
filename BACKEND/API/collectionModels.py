@@ -3,11 +3,14 @@ from typing import Optional
 from pydantic import BaseModel, Field, Json
 from typing import List
 class CollectionEntry(BaseModel):
+    #name of manga
     name: Optional[str]
+    #author of manga
     author: Optional[str]
-    isbn: Optional[str]
+    #link to mal of manga
     link: Optional[str]
-    volumes : Optional[List[int]]
+    #links to volumes (isbnsearch.org)
+    volumes : Optional[List[str]]
 
 class Collection(BaseModel):
       

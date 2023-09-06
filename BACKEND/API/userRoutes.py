@@ -3,10 +3,12 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from typing import List, Annotated
 from userModels import User, TokenData
+from collectionModels import Collection
 from jose import jwt
 from passlib.context import CryptContext
 from dotenv import dotenv_values
 from db import db
+
 config = dotenv_values(".env")
 
 
@@ -18,6 +20,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 def setup_db():
     users = db["USERS"]
     return users
+
+def setup_collection():
+    collections = db["COLLECTIONS"]
+    return collections
 
 def verify_password(plain_password, hashed_password):
     
@@ -137,13 +143,19 @@ async def register(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) :
     if user:
         raise HTTPException(status_code=409, detail="User with this username already exists")
     user = create_user(form_data.username,form_data.password)
+
+    collections = setup_collection()
+
+    #create collection for user
+    collections.insert_one({"user":user["name"],"manga":[]})
+
     # set access token expiration date using env preset amount
     access_token_expires = timedelta(minutes=int(config["ACCESS_TOKEN_EXPIRE_MINUTES"]))
     # create the access token 
     access_token = create_access_token(
         data={"sub": user["name"]}, expires_delta=access_token_expires
     )
-    
+
    # sends the access token 
     #return {"access_token" : user["name"], "token_type": "bearer"}
     return {"access_token" : access_token, "token_type": "bearer"}

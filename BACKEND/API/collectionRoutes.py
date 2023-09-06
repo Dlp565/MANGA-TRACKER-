@@ -19,6 +19,9 @@ async def get_user_collection_helper(user):
     collections = setup_db()
     return collections.find_one({"user":user["name"]})
 
+async def create_collection(user):
+    print(user)
+
 @router.get('/users/me')
 async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
     print(current_user)
@@ -27,6 +30,7 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]
 
     
     return current_user
+
 
 @router.get('/mycollection')
 async def get_user_collection(current_user: Annotated[User, Depends(get_current_user)]) -> Collection:
