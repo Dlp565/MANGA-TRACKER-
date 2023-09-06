@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from typing import List, Annotated
-from models import User, UserInDB, Token, TokenData
+from userModels import User, UserInDB, Token, TokenData
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from dotenv import dotenv_values
@@ -76,7 +76,6 @@ def create_access_token(data:dict, expires_delta: timedelta | None = None):
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     #function to get current user 
 
-    print(token)
 
     # prewritten exception when credentials are wrong
     credentials_exception = HTTPException(
@@ -112,7 +111,6 @@ async def get_current_active_user(current_user: Annotated[User, Depends(get_curr
 @router.post("/token")
 async def login_for_access_token (form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 
-
     #authenticates the user 
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
@@ -138,6 +136,9 @@ async def login_for_access_token (form_data: Annotated[OAuth2PasswordRequestForm
 
 @router.post('/register')
 async def register(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) :
+    user = get_user(form_data.username)
+    if user:
+        raise HTTPException(status_code=409, detail="User with this username already exists")
     user = create_user(form_data.username,form_data.password)
     # set access token expiration date using env preset amount
     access_token_expires = timedelta(minutes=int(config["ACCESS_TOKEN_EXPIRE_MINUTES"]))
@@ -146,8 +147,7 @@ async def register(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) :
         data={"sub": user["name"]}, expires_delta=access_token_expires
     )
     
-    print(access_token)
-    # sends the access token 
+   # sends the access token 
     #return {"access_token" : user["name"], "token_type": "bearer"}
     return {"access_token" : access_token, "token_type": "bearer"}
 

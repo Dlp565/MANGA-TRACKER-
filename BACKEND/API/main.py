@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from pymongo import MongoClient
-from routes import router as test_router 
+from userRoutes import router as user_router 
 from dotenv import dotenv_values
 config = dotenv_values(".env")
 
@@ -33,26 +33,5 @@ def startup_db_client(request = Request):
 def shutdown_db_client():
     app.mongodb_client.close()
 
-app.include_router(test_router, tags=["users"], prefix="")
+app.include_router(user_router, tags=["users"], prefix="")
 
-'''
-
-FastAPI first Tutorial 
-
-class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: Union[bool, None] = None
-
-@app.get("/")
-def read_root():
-    return {"Hello":"World"}
-
-@app.get("/items/{item_id}")
-def read_item(item_id:int, q: Union[str,None] = None):
-    return {"item_id": item_id, "q":q}
-
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: Item):
-    return {"item_name" : item.name, "item_id": item_id}
-'''
