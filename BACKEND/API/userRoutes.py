@@ -8,6 +8,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from dotenv import dotenv_values
 from pymongo import MongoClient
+from db import db
 config = dotenv_values(".env")
 
 
@@ -17,8 +18,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def setup_db():
-    client = MongoClient(config["ATLAS_URI"])
-    db = client[config["DB_NAME"]]
     users = db["USERS"]
     return users
 
@@ -108,7 +107,7 @@ async def get_current_active_user(current_user: Annotated[User, Depends(get_curr
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-@router.post("/token")
+@router.post("/login")
 async def login_for_access_token (form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 
     #authenticates the user 
