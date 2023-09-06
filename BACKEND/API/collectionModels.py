@@ -2,18 +2,17 @@ import uuid
 from typing import Optional
 from pydantic import BaseModel, Field, Json
 from typing import List
-
 class CollectionEntry(BaseModel):
-    name: str
-    author: str
-    isbn: str
-    link: str
-    volumes : List[int]
+    name: Optional[str]
+    author: Optional[str]
+    isbn: Optional[str]
+    link: Optional[str]
+    volumes : Optional[List[int]]
 
 class Collection(BaseModel):
       
-    user: str = Field(...)
-    manga: List[CollectionEntry] 
+    user: str
+    manga: List[CollectionEntry] = None
     
     
     class Config:

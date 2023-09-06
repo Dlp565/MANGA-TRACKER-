@@ -12,13 +12,12 @@ config = dotenv_values(".env")
 router = APIRouter()
 
 def setup_db():
-    users = db["COLLECTIONS"]
-    return users
+    collections = db["COLLECTIONS"]
+    return collections
 
-def get_user_collection(username):
-    users = setup_db()
-    u = users.find_one({"user":username})
-    return u
+async def get_user_collection_helper(user):
+    collections = setup_db()
+    return collections.find_one({"user":user["name"]})
 
 @router.get('/users/me')
 async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
@@ -31,5 +30,15 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]
 
 @router.get('/mycollection')
 async def get_user_collection(current_user: Annotated[User, Depends(get_current_user)]) -> Collection:
-    username = current_user['name']
+    try:
+        col = await get_user_collection_helper(current_user)
+        print(col)
+        return Collection.model_validate(col)
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="collection could not be found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
