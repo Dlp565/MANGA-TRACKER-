@@ -9,7 +9,7 @@ class CollectionEntry(BaseModel):
     author: Optional[str]
     #link to mal of manga
     link: Optional[str]
-    #links to volumes (isbnsearch.org)
+    #list of isbns 
     volumes : Optional[List[str]]
 
 class Collection(BaseModel):
