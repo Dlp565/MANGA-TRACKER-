@@ -5,39 +5,68 @@ from dotenv import dotenv_values
 config = dotenv_values(".env")
 
 
+
 def getVizTitleInfo(title):
-    title = title.split(',')
-    series = title[0]
-    print(series)
+    if ',' in title:
+        title = title.split(',')
+    else:
+        title = [title,title]
+    ret = []
+    series = ""
+    
+    for s in title[0].split():
+        if not s.isdigit():
+            series = series +  " " +str(s)
+    
+    series = series.replace("volume",'')
+    series = series.replace("Volume",'')
+    
+
     volNum = None
     for s in title[1].split():
         if s.isdigit():
             volNum  = s
-    print(volNum)
+    
+    return (series,volNum)
 
 #get Volume info from isbn
 def getVolume(isbns:int):
     res = requests.get(f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbns}')
     #print(res.json())
+
+    if res.status_code != 200:
+        raise Exception("Request for this isbn could not be fulfilled!")
+
+    ret = {}
     rj = res.json()
+    if rj["totalItems"] == 0:
+        raise Exception("Request for this isbn could not be fulfilled!")
+
     info = rj["items"][0]["volumeInfo"]
-    print(rj["items"][0]['selfLink'])
+    google_link = rj["items"][0]['selfLink']
     
     pub = info["publisher"]
-    print(pub)
     #Extract name and volume number 
-    title = info['title']
-    if pub == "VIZ Media LLC":
-        if title.contains('Omnibus'):
+
+    #TODO: title section sometimes just contains the title and no vol number
+    title: str = info['title']
+    series, volume = None, None
+    if 'Omnibus'in title:
             print(title)
-        else:
-            getVizTitleInfo(title)
     else:
-        print(title)
-    print(info['authors'][0])
-    print(info['imageLinks']["thumbnail"])
+        (series,volume) = getVizTitleInfo(title)
     
-    
+    author = info['authors'][0]
+    image = None
+    if 'imageLinks' in info :
+        image = info['imageLinks']["thumbnail"]
+    book = {}
+    book["link"] = google_link
+    book["series"] = series
+    book["volume"] = volume
+    book["author"] = author
+    book["image"] = image
+    return book 
 
-
-getVolume(9781612629612)
+book = getVolume(1974709930)
+print(book)

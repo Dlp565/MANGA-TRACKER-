@@ -6,6 +6,7 @@ from typing import List, Annotated
 from userModels import User
 from collectionModels import *
 from userRoutes import get_current_user
+from isbn import *
 
 
 config = dotenv_values(".env")
@@ -17,26 +18,17 @@ def setup_db():
 
 async def get_user_collection_helper(user):
     collections = setup_db()
+    #finds collection based on user's name
     return collections.find_one({"user":user["name"]})
 
-async def create_collection(user):
-    print(user)
 
-@router.get('/users/me')
-async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
-    print(current_user)
-    del current_user['_id']
-    del current_user["hashed_password"]
-
-    
-    return current_user
 
 
 @router.get('/mycollection')
 async def get_user_collection(current_user: Annotated[User, Depends(get_current_user)]) -> Collection:
     try:
         col = await get_user_collection_helper(current_user)
-        print(col)
+        #returns Collection model from collection entry in DB
         return Collection.model_validate(col)
     except Exception as e:
         print(e)
@@ -46,3 +38,12 @@ async def get_user_collection(current_user: Annotated[User, Depends(get_current_
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+@router.get('/isbn')
+async def get_user_collection(isbn: str):
+    try:
+        return getVolume(isbn)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
