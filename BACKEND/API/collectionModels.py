@@ -2,15 +2,25 @@ import uuid
 from typing import Optional
 from pydantic import BaseModel, Field, Json
 from typing import List
+
+class VolumeEntry(BaseModel):
+    link: Optional[str]
+    series: Optional[str]
+    volume: Optional[str]
+    author: Optional[str]
+    image: Optional[str]
+    isbn: Optional[str]
+    language: Optional[str]
+
 class CollectionEntry(BaseModel):
     #name of manga
-    name: Optional[str]
+    series: Optional[str]
     #author of manga
     author: Optional[str]
     #link to mal of manga
     link: Optional[str]
     #list of isbns 
-    volumes : Optional[List[str]]
+    volumes : Optional[List[VolumeEntry]]
 
 class Collection(BaseModel):
       

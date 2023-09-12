@@ -38,12 +38,26 @@ async def get_user_collection(current_user: Annotated[User, Depends(get_current_
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+#Used when user scans book (isnb) 
+#Will result in various results that they could pick from
 @router.get('/isbn')
 async def get_user_collection(isbn: str):
     try:
         #volume may not contain actual volume num
         return getVolume(isbn)
     except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    
+@router.get('/name')
+async def get_user_collection(name: str):
+    try:
+        #volume may not contain actual volume num
+        return getVolumeName(name)
+    except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)

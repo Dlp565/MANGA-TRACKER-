@@ -20,7 +20,7 @@ def getVizTitleInfo(title):
     
     series = series.replace("volume",'')
     series = series.replace("Volume",'')
-    
+    series = series.replace("vol",'')
 
     volNum = None
     for s in title[1].split():
@@ -28,6 +28,52 @@ def getVizTitleInfo(title):
             volNum  = s
     
     return (series,volNum)
+
+def processVolume(results):
+        info = results["volumeInfo"]
+        google_link = None
+        if 'selfLink' in results:
+            google_link = results['selfLink']
+
+        #print(info.keys())
+
+
+        #pub = info["publisher"]
+        #Extract name and volume number 
+
+        #TODO: title section sometimes just contains the title and no vol number
+        title: str = info['title']
+        series, volume = None, None
+        # if 'Omnibus'in title:
+        #         print(title)
+        # else:
+        (series,volume) = getVizTitleInfo(title)
+        author = None
+        
+        if 'authors' in info:
+            author = info['authors'][0]
+        
+        image = None
+        if 'imageLinks' in info :
+            print(info["imageLinks"])
+            image = info['imageLinks']["thumbnail"]
+        isbn = None
+        if "industryIdentifiers" in info:
+            isbn = info["industryIdentifiers"][0]['identifier']
+
+        language = None
+        if 'language' in info:
+            language = info['language']
+        book = {}
+        book["link"] = google_link
+        book["series"] = series
+        book["volume"] = volume
+        book["author"] = author
+        book["image"] = image
+        book['isbn'] = isbn
+        book['language'] = language
+        return book 
+    
 
 #get Volume info from isbn
 def getVolume(isbns:int):
@@ -37,36 +83,26 @@ def getVolume(isbns:int):
     if res.status_code != 200:
         raise Exception("Request for this isbn could not be fulfilled!")
 
-    ret = {}
     rj = res.json()
     if rj["totalItems"] == 0:
         raise Exception("Request for this isbn could not be fulfilled!")
+    ret = {}
+    for i in range (0,len(rj["items"])):
+        ret[i] = processVolume(rj["items"][i])
+    return ret
 
-    info = rj["items"][0]["volumeInfo"]
-    google_link = rj["items"][0]['selfLink']
-    
-    pub = info["publisher"]
-    #Extract name and volume number 
+def getVolumeName(name: str):
+    res = requests.get(f'https://www.googleapis.com/books/v1/volumes?q=intitle:{name}')
+    if res.status_code != 200:
+        raise Exception("Request for this name could not be fulfilled!")
 
-    #TODO: title section sometimes just contains the title and no vol number
-    title: str = info['title']
-    series, volume = None, None
-    if 'Omnibus'in title:
-            print(title)
-    else:
-        (series,volume) = getVizTitleInfo(title)
-    
-    author = info['authors'][0]
-    image = None
-    if 'imageLinks' in info :
-        image = info['imageLinks']["thumbnail"]
-    book = {}
-    book["link"] = google_link
-    book["series"] = series
-    book["volume"] = volume
-    book["author"] = author
-    book["image"] = image
-    return book 
+    rj = res.json()
+    if rj["totalItems"] == 0:
+        raise Exception("Request for this name could not be fulfilled!")
+    ret = {}
+    for i in range (0,len(rj["items"])):
+        ret[i] = processVolume(rj["items"][i])
+    return ret
 
-book = getVolume(1974709930)
+book = getVolumeName("One piece vol 56")
 print(book)
