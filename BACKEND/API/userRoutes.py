@@ -147,7 +147,7 @@ async def register(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) :
     collections = setup_collection()
 
     #create collection for user
-    collections.insert_one({"user":user["name"],"manga":[]})
+    collections.insert_one({"user":user["name"],"manga":{}})
 
     # set access token expiration date using env preset amount
     access_token_expires = timedelta(minutes=int(config["ACCESS_TOKEN_EXPIRE_MINUTES"]))
