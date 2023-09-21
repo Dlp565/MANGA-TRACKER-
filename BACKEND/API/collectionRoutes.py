@@ -7,33 +7,81 @@ from userModels import User
 from collectionModels import *
 from userRoutes import get_current_user
 from isbn import *
-
+import bson
+from bson.json_util import dumps, loads
 
 config = dotenv_values(".env")
 router = APIRouter()
 
-def setup_db():
+def setup_db_collection():
     collections = db["COLLECTIONS"]
     return collections
 
-async def get_user_collection_helper(user):
-    collections = setup_db()
-    #finds collection based on user's name
-    return collections.find_one({"user":user["name"]})
+def setup_db_volume():
+    volumes = db["VOLUMES"]
+    return volumes
 
-async def insert_entry(user,manga):
-    #TODO: Fix this 
-    collections = setup_db()
-    return collections.update_one({"user":user["name"]},{"$set": {'manga': manga}})
+def setup_user():
+    return db["USERS"]
+
+
+async def get_user_collection_helper(user):
+    collections = setup_db_collection()
+    #finds collection based on user's name
+    
+    collections = collections.find({"userid":str(user["_id"])})
+    col_list = list(collections)
+    for col in col_list:
+        del col['_id']
+    return col_list
+
+async def insert_volume(volume):
+
+    volumes =  setup_db_volume()
+    ret = volumes.find_one({"isbn":volume.isbn})
+    if not ret:
+        ret = volumes.insert_one(volume.model_dump())
+        ret = volumes.find_one({"isbn":volume.isbn})
+    return ret['_id']
+    
+def get_mal_link(series):
+    return ''
+
+async def add_volume_to_collection_helper(volume,volume_id,user):
+    collections = setup_db_collection()
+    
+    collection_entry = collections.find_one({'series':volume.series, 'userid':str(user)})
+    
+    if not collection_entry:
+        collectiondict = {}
+        collectiondict['link'] = get_mal_link(volume.series)
+        collectiondict['series'] = volume.series
+        collectiondict['author'] = volume.author
+        collectiondict['userid'] = str(user)
+        collectiondict['volumes'] = []
+        collection_model = CollectionEntry.parse_obj(collectiondict)
+        
+        ret = collections.insert_one(collection_model.model_dump())
+        
+        collection_entry = collections.find_one({'_id':ret.inserted_id})
+    
+    if not str(volume_id) in collection_entry['volumes']:
+        collections.update_one({'series':volume.series, 'userid':str(user)},{'$push':{'volumes':str(volume_id)}})
+    
+    #see if this manga is in collection 
+
+    #return collections.update_one({"user":user["name"]},{"$set": {'manga': manga}})
 
 
 @router.get('/mycollection')
-async def get_user_collection(current_user: Annotated[User, Depends(get_current_user)]) -> Collection:
+async def get_user_collection(current_user: Annotated[User, Depends(get_current_user)]) :
     try:
         col = await get_user_collection_helper(current_user)
-        print(col)
+        return col
+        #print(loads(col))
+        #return loads(col)
         #returns Collection model from collection entry in DB
-        return Collection.model_validate(col)
+        #return Collection.model_validate(col)
     except Exception as e:
         print(e)
         raise HTTPException(
@@ -68,30 +116,10 @@ async def get_volume_by_name(name: str):
         )
 
 @router.post('/addCollection')
-async def add_volume_to_collection(current_user: Annotated[User, Depends(get_current_user)],volume: VolumeEntry = Depends()):
-    col = await get_user_collection_helper(current_user)
-    print(col)
-    if volume.series in col['manga']:
-        currEntry = col['manga']      
-    else:
+async def add_volume_to_collection(current_user: Annotated[User, Depends(get_current_user)],volume: VolumeData = Depends()):
+    #col = await get_user_collection_helper(current_user)
+    volume_data = volume.model_dump()
+    curr_volume = VolumeEntry.parse_obj(volume_data)
+    volume_id = await insert_volume(curr_volume)
+    await add_volume_to_collection_helper(volume,volume_id,current_user['_id'])
 
-        #TODO get mal link 
-        mal_link = "filler"
-
-        
-        currEntry = {}
-        currEntry['series'] = volume.series
-        currEntry['author'] = volume.author
-        currEntry['link'] = mal_link
-        currEntry['volumes'] = []
-
-        
-    currEntry['volumes'].append(volume)
-    entry = CollectionEntry.validate(currEntry)
-    col['manga'][volume.series] = entry
-    newCol = Collection.validate(col)
-    manga = col['manga']
-    print(manga)
-    ret = await insert_entry(current_user,manga)
-    print(ret)
-    return {}

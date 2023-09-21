@@ -3,16 +3,27 @@ from typing import Optional
 from pydantic import BaseModel, Field, Json
 from typing import List, Dict
 from fastapi import Form
+from mongoengine import *
+from uuid import UUID, uuid4
+from bson import ObjectId
 
-class VolumeEntry(BaseModel):
+class VolumeData(BaseModel):
     link: str
     series: str
     volume: str
-    author: Optional[str]
-    image: Optional[str]
+    author: str
+    image: str
     isbn: str
-    language: Optional[str]
+    language: str
 
+
+class VolumeEntry(BaseModel):
+    
+    isbn: str
+    link: str
+    volume: str
+    image: str
+    language: str
     # @classmethod
     # def as_form(
     #     cls,
@@ -29,28 +40,16 @@ class VolumeEntry(BaseModel):
 
 class CollectionEntry(BaseModel):
     #name of manga
-    series: Optional[str]
+    series: str
     #author of manga
-    author: Optional[str]
+    author: str
     #link to mal of manga
-    link: Optional[str]
+    link: str
     #list of isbns 
-    volumes : Optional[List[VolumeEntry]]
+    userid: str
+    volumes : Optional[List[str]]
 
-class Collection(BaseModel):
-      
-    user: str
-    #manga: Dict[str,CollectionEntry] = None
-    manga: Dict[str,CollectionEntry] = None
-    
-    class Config:
-        allow_population_by_field_name = True
-        schema_extra = {
-            "example": {
-                "user": "ExUser",
-                "manga": ["entry","entry"]
-            }
-        }
+
 
 
 

@@ -104,5 +104,8 @@ def getVolumeName(name: str):
         ret[i] = processVolume(rj["items"][i])
     return ret
 
+def getLink(link: str):
+   res = requests.get(link) 
+   print(res.json())
 book = getVolumeName("One piece vol 56")
 print(book)
