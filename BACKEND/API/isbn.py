@@ -107,5 +107,35 @@ def getVolumeName(name: str):
 def getLink(link: str):
    res = requests.get(link) 
    print(res.json())
-book = getVolumeName("One piece vol 56")
-print(book)
+
+
+def getSeries(series: str):
+    print(series)
+    query = '''
+    query ($search: String) {
+        Media (search: $search, type: MANGA) {
+            id
+            title {
+                romaji
+                english native
+            }
+            coverImage {
+                extraLarge
+            }
+            genres
+            popularity
+        }
+    }
+    '''
+
+    variables = {
+        'search' : series
+    }
+
+    url = 'https://graphql.anilist.co'
+
+    response = requests.post(url, json = {'query':query, 'variables': variables})
+    res = response.json()
+    if 'errors' in res:
+        raise Exception("Manga not found")
+    return res

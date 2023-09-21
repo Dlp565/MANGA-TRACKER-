@@ -44,8 +44,7 @@ async def insert_volume(volume):
         ret = volumes.find_one({"isbn":volume.isbn})
     return ret['_id']
     
-def get_mal_link(series):
-    return ''
+
 
 async def add_volume_to_collection_helper(volume,volume_id,user):
     collections = setup_db_collection()
@@ -54,7 +53,15 @@ async def add_volume_to_collection_helper(volume,volume_id,user):
     
     if not collection_entry:
         collectiondict = {}
-        collectiondict['link'] = get_mal_link(volume.series)
+        seriesInfo = {}
+        try:
+            seriesInfo = getSeries(volume.series)['data']['Media']
+            collectiondict['image'] = seriesInfo['coverImage']['extraLarge']
+            collectiondict['genres'] = seriesInfo['genres']
+        
+        except Exception:
+            collectiondict['image'] = ''
+            collectiondict['genres'] = []
         collectiondict['series'] = volume.series
         collectiondict['author'] = volume.author
         collectiondict['userid'] = str(user)
@@ -68,9 +75,9 @@ async def add_volume_to_collection_helper(volume,volume_id,user):
     if not str(volume_id) in collection_entry['volumes']:
         collections.update_one({'series':volume.series, 'userid':str(user)},{'$push':{'volumes':str(volume_id)}})
     
-    #see if this manga is in collection 
+    
 
-    #return collections.update_one({"user":user["name"]},{"$set": {'manga': manga}})
+    
 
 
 @router.get('/mycollection')

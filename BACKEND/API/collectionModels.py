@@ -44,7 +44,8 @@ class CollectionEntry(BaseModel):
     #author of manga
     author: str
     #link to mal of manga
-    link: str
+    image: str
+    genres: List[str]
     #list of isbns 
     userid: str
     volumes : Optional[List[str]]
