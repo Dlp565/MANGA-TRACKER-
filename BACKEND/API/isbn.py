@@ -55,7 +55,6 @@ def processVolume(results):
         
         image = None
         if 'imageLinks' in info :
-            print(info["imageLinks"])
             image = info['imageLinks']["thumbnail"]
         isbn = None
         if "industryIdentifiers" in info:
@@ -87,8 +86,10 @@ def getVolume(isbns:int):
     if rj["totalItems"] == 0:
         raise Exception("Request for this isbn could not be fulfilled!")
     ret = {}
+    
     for i in range (0,len(rj["items"])):
         ret[i] = processVolume(rj["items"][i])
+    
     return ret
 
 def getVolumeName(name: str):
@@ -100,9 +101,11 @@ def getVolumeName(name: str):
     if rj["totalItems"] == 0:
         raise Exception("Request for this name could not be fulfilled!")
     ret = {}
+    count = 0
     for i in range (0,len(rj["items"])):
         ret[i] = processVolume(rj["items"][i])
-    return ret
+        count += 1
+    return (ret,count)
 
 def getLink(link: str):
    res = requests.get(link) 
@@ -110,7 +113,6 @@ def getLink(link: str):
 
 
 def getSeries(series: str):
-    print(series)
     query = '''
     query ($search: String) {
         Media (search: $search, type: MANGA) {

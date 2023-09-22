@@ -114,7 +114,19 @@ async def get_volume_by_isbn(isbn: str):
 async def get_volume_by_name(name: str):
     try:
         #volume may not contain actual volume num
-        return getVolumeName(name)
+        ret,count = getVolumeName(name)
+        
+        rets = []
+        for i in range(0,count):
+            volume = ret[i]
+            print(volume)
+            try:
+                VolumeEntry.parse_obj(volume)
+                rets.append(volume)
+            except Exception:
+                print()
+        return ret
+
     except Exception as e:
         
         raise HTTPException(
