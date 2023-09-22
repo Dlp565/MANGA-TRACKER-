@@ -48,19 +48,19 @@ def processVolume(results):
         #         print(title)
         # else:
         (series,volume) = getVizTitleInfo(title)
-        author = None
+        author = ""
         
         if 'authors' in info:
             author = info['authors'][0]
         
-        image = None
+        image = ""
         if 'imageLinks' in info :
             image = info['imageLinks']["thumbnail"]
         isbn = None
         if "industryIdentifiers" in info:
             isbn = info["industryIdentifiers"][0]['identifier']
 
-        language = None
+        language = ""
         if 'language' in info:
             language = info['language']
         book = {}
@@ -72,7 +72,9 @@ def processVolume(results):
         book['isbn'] = isbn
         book['language'] = language
         return book 
-    
+
+
+        
 
 #get Volume info from isbn
 def getVolume(isbns:int):
