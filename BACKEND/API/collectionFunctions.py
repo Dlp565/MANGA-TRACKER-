@@ -21,6 +21,7 @@ async def remove_volume(volumeid, series,user):
     collections = setup_db_collection()
     collection = collections.update_one({"userid":str(user),"series":series},
                                         {'$pull': {'volumes': str(volumeid)}})
+    print(collection)
 async def get_user_collection_helper(user):
     collections = setup_db_collection()
     #finds collection based on user's name
