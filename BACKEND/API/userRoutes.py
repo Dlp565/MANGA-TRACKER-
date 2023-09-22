@@ -1,25 +1,28 @@
-from fastapi import APIRouter, Body, Request, Response, HTTPException, status, Depends
-from fastapi.encoders import jsonable_encoder
+from fastapi import APIRouter,HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from typing import List, Annotated
-from userModels import User, UserInDB, Token, TokenData
-from jose import JWTError, jwt
+from userModels import User, TokenData
+from jose import jwt
 from passlib.context import CryptContext
 from dotenv import dotenv_values
-from pymongo import MongoClient
 from db import db
+
 config = dotenv_values(".env")
 
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 def setup_db():
     users = db["USERS"]
     return users
+
+def setup_collection():
+    collections = db["COLLECTIONS"]
+    return collections
 
 def verify_password(plain_password, hashed_password):
     
@@ -139,13 +142,18 @@ async def register(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) :
     if user:
         raise HTTPException(status_code=409, detail="User with this username already exists")
     user = create_user(form_data.username,form_data.password)
+
+    
+
+    
+
     # set access token expiration date using env preset amount
     access_token_expires = timedelta(minutes=int(config["ACCESS_TOKEN_EXPIRE_MINUTES"]))
     # create the access token 
     access_token = create_access_token(
         data={"sub": user["name"]}, expires_delta=access_token_expires
     )
-    
+
    # sends the access token 
     #return {"access_token" : user["name"], "token_type": "bearer"}
     return {"access_token" : access_token, "token_type": "bearer"}
@@ -165,49 +173,3 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]
 
 
 
-'''
-
-@router.get("/users", response_description="Get all users", response_model = List[User])
-def list_users(request: Request):
-    # Error Here: 
-
-    users = list(request.app.database["USERS"].find(limit=100))
-    
-    print(type(users[0]["_id"]))
-    return users
-    
-@router.post("/register", response_description="POST user",status_code=status.HTTP_201_CREATED, response_model=User)
-def create_test(request: Request, user: User = Body(...)):
-    user = jsonable_encoder(user)
-    new_user = request.app.database["USERS"].insert_one(user)
-    created_user = request.app.database["USERS"].find_one(
-        {"_id": new_user.inserted_id}
-    )
-
-    return created_user
-
-
-'''
-'''
-@router.post("/", response_description="Test POST",status_code=status.HTTP_201_CREATED, response_model=Test)
-def create_test(request: Request, test: Test = Body(...)):
-    test = jsonable_encoder(test)
-    new_test = request.app.database["test"].insert_one(test)
-    created_test = request.app.database["test"].find_one(
-        {"_id": new_test.inserted_id}
-    )
-
-    return created_test
-
-@router.get("/", response_description="Get all tests", response_model = List[Test])
-def list_tests(request: Request):
-    tests = list(request.app.database["tests"].find(limit=100))
-    return tests
-
-@router.get("/{id}", response_description="Get a single test by id", response_model=Test)
-def find_book(id: str, request: Request):
-    if (test := request.app.database["tests"].find_one({"_id":id})) is not None:
-        return test
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = f'Test with ID {id} not found' )
-
-'''
