@@ -2,11 +2,11 @@ from fastapi import APIRouter,HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from typing import List, Annotated
-from userModels import User, TokenData
+from models.userModels import User, TokenData
 from jose import jwt
 from passlib.context import CryptContext
 from dotenv import dotenv_values
-from db import db
+from utils.db import db
 
 config = dotenv_values(".env")
 

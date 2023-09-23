@@ -21,7 +21,8 @@ def getVizTitleInfo(title):
     series = series.replace("volume",'')
     series = series.replace("Volume",'')
     series = series.replace("vol",'')
-
+    series = series.strip()
+    print(series)
     volNum = None
     for s in title[1].split():
         if s.isdigit():

@@ -1,10 +1,11 @@
-from db import db
+from utils.db import db
 from typing import List, Annotated
-from userModels import User
-from collectionModels import *
+from models.userModels import User
+from models.collectionModels import *
 
-from isbn import *
+from utils.isbn import *
 import bson
+from bson import ObjectId
 
 def setup_db_collection():
     collections = db["COLLECTIONS"]
@@ -40,6 +41,11 @@ async def insert_volume(volume):
         ret = volumes.insert_one(volume.model_dump())
         ret = volumes.find_one({"isbn":volume.isbn})
     return ret['_id']
+
+async def get_volume(volumeid):
+    volumes = setup_db_volume()
+    ret = volumes.find_one({"_id": ObjectId(volumeid)})
+    return ret
     
 
 
