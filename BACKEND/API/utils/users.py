@@ -1,12 +1,12 @@
 from fastapi import APIRouter,HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
-from typing import List, Annotated
-from userModels import User, TokenData
+from typing import  Annotated
+from models.userModels import User, TokenData
 from jose import jwt
 from passlib.context import CryptContext
 from dotenv import dotenv_values
-from db import db
+from utils.db import db
 
 config = dotenv_values(".env")
 
@@ -14,7 +14,6 @@ config = dotenv_values(".env")
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
 
 def setup_db():
     users = db["USERS"]
@@ -109,67 +108,3 @@ async def get_current_active_user(current_user: Annotated[User, Depends(get_curr
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
-
-@router.post("/login")
-async def login_for_access_token (form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-
-    #authenticates the user 
-    user = authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    
-    # set access token expiration date using env preset amount
-    access_token_expires = timedelta(minutes=int(config["ACCESS_TOKEN_EXPIRE_MINUTES"]))
-    # create the access token 
-    access_token = create_access_token(
-        data={"sub": user["name"]}, expires_delta=access_token_expires
-    )
-    
-    print(access_token)
-    # sends the access token 
-    #return {"access_token" : user["name"], "token_type": "bearer"}
-    return {"access_token" : access_token, "token_type": "bearer"}
-
-
-@router.post('/register')
-async def register(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) :
-    user = get_user(form_data.username)
-    if user:
-        raise HTTPException(status_code=409, detail="User with this username already exists")
-    user = create_user(form_data.username,form_data.password)
-
-    
-
-    
-
-    # set access token expiration date using env preset amount
-    access_token_expires = timedelta(minutes=int(config["ACCESS_TOKEN_EXPIRE_MINUTES"]))
-    # create the access token 
-    access_token = create_access_token(
-        data={"sub": user["name"]}, expires_delta=access_token_expires
-    )
-
-   # sends the access token 
-    #return {"access_token" : user["name"], "token_type": "bearer"}
-    return {"access_token" : access_token, "token_type": "bearer"}
-
-@router.get('/items/')
-async def read_items(token: Annotated[str, Depends(get_current_active_user)]):
-    return {"token": token}
-
-@router.get('/users/me')
-async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
-    print(current_user)
-    del current_user['_id']
-    del current_user["hashed_password"]
-
-    
-    return current_user
-
-
-
