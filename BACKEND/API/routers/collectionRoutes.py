@@ -27,7 +27,7 @@ async def  getVolumes(current_user: Annotated[User, Depends(get_current_user)],v
 async def get_user_collection(current_user: Annotated[User, Depends(get_current_user)]) :
     try:
         col = await get_user_collection_helper(current_user)
-        return col
+        return {"collection": col}
         #print(loads(col))
         #return loads(col)
         #returns Collection model from collection entry in DB
@@ -68,7 +68,7 @@ async def get_volume_by_name(name: str):
                 rets.append(volume)
             except Exception:
                 print()
-        return rets
+        return {"results": rets }
 
     except Exception as e:
         
